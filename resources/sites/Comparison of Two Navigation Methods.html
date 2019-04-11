@@ -1,0 +1,466 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<!-- saved from url=(0078)http://people.csail.mit.edu/lpk/mars/temizer_2001/Method_Comparison/index.html -->
+<html class="gr__people_csail_mit_edu"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+   
+   <meta name="Author" content="Selim Temizer">
+   <meta name="GENERATOR" content="Mozilla/4.75 [en] (X11; U; Linux 2.2.16-3smp i686) [Netscape]">
+   <title>Comparison of Two Navigation Methods</title>
+<style type="text/css">.backpack.dropzone {
+  font-family: 'SF UI Display', 'Segoe UI';
+  font-size: 15px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 250px;
+  height: 150px;
+  font-weight: lighter;
+  color: white;
+  will-change: right;
+  z-index: 2147483647;
+  bottom: 20%;
+  background: #333;
+  position: fixed;
+  user-select: none;
+  transition: left .5s, right .5s;
+  right: 0px; }
+  .backpack.dropzone .animation {
+    height: 80px;
+    width: 250px;
+    background: url("https://sxt.cdn.skype.com/assets/dropzone/hoverstate.png") left center; }
+  .backpack.dropzone .title::before {
+    content: 'Save to'; }
+  .backpack.dropzone.closed {
+    right: -250px; }
+  .backpack.dropzone.hover .animation {
+    animation: sxt-play-anim-hover 0.91s steps(21);
+    animation-fill-mode: forwards;
+    background: url("https://sxt.cdn.skype.com/assets/dropzone/hoverstate.png") left center; }
+
+@keyframes sxt-play-anim-hover {
+  from {
+    background-position: 0px; }
+  to {
+    background-position: -5250px; } }
+  .backpack.dropzone.saving .title::before {
+    content: 'Saving to'; }
+  .backpack.dropzone.saving .animation {
+    background: url("https://sxt.cdn.skype.com/assets/dropzone/saving_loop.png") left center;
+    animation: sxt-play-anim-saving steps(59) 2.46s infinite; }
+
+@keyframes sxt-play-anim-saving {
+  100% {
+    background-position: -14750px; } }
+  .backpack.dropzone.saved .title::before {
+    content: 'Saved to'; }
+  .backpack.dropzone.saved .animation {
+    background: url("https://sxt.cdn.skype.com/assets/dropzone/saved.png") left center;
+    animation: sxt-play-anim-saved steps(20) 0.83s forwards; }
+
+@keyframes sxt-play-anim-saved {
+  100% {
+    background-position: -5000px; } }
+</style></head>
+<body data-gr-c-s-loaded="true">
+<a name="Top"></a>
+<hr width="100%">
+<center>
+<h1>
+Comparison of the Human Model and Potential Field Method for Navigation</h1></center>
+&nbsp; Before starting to compare the two methods, you may first want to
+check the following links for a step by step construction of the formulas
+of both methods to gain insight about their specific properties. The step
+by step constructions make it very easy to understand how the parameters
+in the formulas can be used to tune the performance:
+<ul>
+<li> <a href="http://people.csail.mit.edu/lpk/mars/temizer_2001/Human_Model/index.html">Human model</a></li>
+<li> <a href="http://people.csail.mit.edu/lpk/mars/temizer_2001/Potential_Field_Method/index.html">Potential Field Method</a></li>
+</ul>
+&nbsp; Let's begin by looking at a typical performance demonstration of
+both methods in an example scene:
+<br>&nbsp;
+<center><table border="" cellpadding="10" width="100%" nosave="">
+<tbody><tr nosave="">
+<td width="675" nosave="">
+<center><img src="./Comparison of Two Navigation Methods_files/both_methods_demo.gif" nosave="" height="517" width="665"></center>
+</td>
+
+<td>Room dimensions: 5 x 6.5 meters
+<br>Smaller tick mark period = 10 cm
+<br>Larger tick mark period = 100 cm
+<p>Green dots are obstacles.
+<br>Blue dot is the target.
+<br>Agent starts in upper right corner with heading = 0 degrees (facing
++x axis)
+</p><p>White path is traversed with potential field method.
+<br>Cyan path is traversed with human model.
+</p><p>In both trials, the constant speed of the agent was 0.5 meters/sec.
+<br>White path was traversed in 13.2 seconds. (Length = 6.6 meters)
+<br>Cyan path was traversed in 11.2 seconds. (Length = 5.6 meters)
+</p><p>The gray circles around the obstacles show the influence distance (0.8
+meters) of the obstacles, which is used while potential field method was
+controlling the agent.
+</p><p>(NOTE: Although the starting points of the paths do not seem to match,
+the agent starts at the same point with the same heading angle for both
+methods. This is a technical detail about the modification of the potential
+field method to be applicable in the simulation software.)</p></td>
+</tr>
+
+<tr nosave="">
+<td width="675" nosave="">&nbsp; The speed graphs for the human model (yellow
+lines) are given below ( the red lines of the translation graph are 0.9
+m/s and -0.9 m/s, and the red lines of rotation graph are 167 degrees/sec
+and -167 degrees/sec, respectively.)&nbsp; (These graphs can also be plotted
+using the following matlab data files: <a href="http://people.csail.mit.edu/lpk/mars/temizer_2001/Method_Comparison/Data_Files/translation_data.m">Translation
+data file</a>, <a href="http://people.csail.mit.edu/lpk/mars/temizer_2001/Method_Comparison/Data_Files/rotation_data.m">Rotation
+data file</a>)
+<center>
+<p><img src="./Comparison of Two Navigation Methods_files/demo_speeds.gif" nosave="" height="279" width="669"></p></center>
+</td>
+
+<td>&nbsp; And the overall artificial potential field in the room is shown
+(in 5 different views) by the graphs below. (The room is sampled by a 100
+x 100 matrix of evenly distributed cells in both x and y directions.)
+<p>&nbsp; The graphs on the left show the magnitudes of the vectors, and
+the graphs on the right show the directions of the vectors from the same
+point of view. Only the 5th graphs of both columns are taken from random
+viewpoints, and do not match with each other.
+</p><p>&nbsp; Note that the tips of the vector magnitude cones are actually
+extending to infinity, they are trimmed for better plotting.
+</p><p>&nbsp; The matlab data file is also available: <a href="http://people.csail.mit.edu/lpk/mars/temizer_2001/Method_Comparison/Data_Files/100by100_vector_field.m">Potential
+field data file</a></p></td>
+</tr>
+</tbody></table></center>
+
+<br>&nbsp;
+<center><table border="" cellpadding="10" cols="2" width="100%" nosave="">
+<tbody><tr nosave="">
+<td> <center><img src="./Comparison of Two Navigation Methods_files/demo_vector_field_1.gif" nosave="" height="419" width="552"></center> </td>
+<td> <center><img src="./Comparison of Two Navigation Methods_files/demo_vector_directions_1.gif" nosave="" height="419" width="552"></center> </td>
+</tr>
+
+<tr>
+<td> <center><img src="./Comparison of Two Navigation Methods_files/demo_vector_field_2.gif" nosave="" height="419" width="552"></center> </td>
+<td> <center><img src="./Comparison of Two Navigation Methods_files/demo_vector_directions_2.gif" nosave="" height="419" width="552"></center> </td>
+</tr>
+
+<tr>
+<td> <center><img src="./Comparison of Two Navigation Methods_files/demo_vector_field_3.gif" nosave="" height="419" width="552"></center> </td>
+<td> <center><img src="./Comparison of Two Navigation Methods_files/demo_vector_directions_3.gif" nosave="" height="419" width="552"></center> </td>
+</tr>
+
+<tr>
+<td> <center><img src="./Comparison of Two Navigation Methods_files/demo_vector_field_4.gif" nosave="" height="419" width="552"></center> </td>
+<td> <center><img src="./Comparison of Two Navigation Methods_files/demo_vector_directions_4.gif" nosave="" height="419" width="552"></center> </td>
+</tr>
+
+<tr>
+<td> <center><img src="./Comparison of Two Navigation Methods_files/demo_vector_field_5.gif" nosave="" height="419" width="552"></center> </td> 
+<td> <center><img src="./Comparison of Two Navigation Methods_files/demo_vector_directions_5.gif" nosave="" height="419" width="552"></center> </td>
+</tr>
+</tbody></table></center>
+
+<p>&nbsp; Having seen a typical example, we can now discuss some major
+differences between these two navigation methods:
+</p><ul>
+<li>
+The first major (and immediately noticed) difference of the human model
+from the potential field method is the following: The obstacle part of
+the human model formula has two parts; one taking the distance into account,
+and the other taking the direction of the obstacle into account. On the
+other hand, the obstacle part of the potential field method has only one
+part (distance). Therefore we observe the following behaviors:</li>
+
+<br>&nbsp;
+<ul>
+<li>
+The human model effectively uses the direction part to steer away from
+obstacles without getting very close to them, provided that the parameters
+of <b>both parts</b> are carefully adjusted. This results in very smooth
+paths that really resemble how humans prefer to steer (hence, the human
+model).</li>
+
+<br>&nbsp;
+<li>
+An agent using the potential field method should first approach an obstacle
+close enough to produce a repulsive force that is large enough to balance
+the attractive force so that the agent can start to steer away.</li>
+</ul>
+</ul>
+
+<blockquote>The obstacle parts of both methods are shown below:</blockquote>
+
+<center><table border="" cellpadding="10" width="100%" nosave="">
+<tbody><tr nosave="">
+<td nosave="">
+<center><img src="./Comparison of Two Navigation Methods_files/HM_obstacle_part.gif" nosave="" height="419" width="552">
+<p>Human model obstacle part
+<br>(E1 = 8, E2 = 7, O1 = 10, O2 = 1.6)</p></center>
+</td>
+
+<td>
+<center><img src="./Comparison of Two Navigation Methods_files/PF_obstacle_part.gif" nosave="" height="419" width="552">
+<p>Potential field method obstacle part
+<br>(Eta = 1, rho_0 = 4)</p></center>
+</td>
+</tr>
+</tbody></table></center>
+
+<br>&nbsp;
+<ul>The following two experiments demonstrate the mentioned behaviors:</ul>
+
+<br>&nbsp;
+<center><table border="" cellpadding="10" width="100%" nosave="">
+<tbody><tr nosave="">
+<td width="570" nosave="">
+<center><img src="./Comparison of Two Navigation Methods_files/HM_direction_advantage1_1.gif" nosave="" height="419" width="552"></center>
+</td>
+
+<td valign="TOP" nosave="">
+<br>In the first experiment, I tried to adjust the distance part of the
+potential field method to match with the distance part of the human model
+(the emphasis is on the influence distance). I did not change the parameters
+of the human model which were well-tuned for this experiment.
+<p>In the graph on the left side, the distance part of the human model
+is plotted with red, and falls to zero around 3.5 meters. So, I used 3.5
+meters as rho_0 (object influence distance) for the potential field method.
+The resulting distance part of the potential field is plotted with blue
+in the same graph.
+</p><p>The parameters for the human model were:
+<br>B = 3.25, K = 2.5, G1 = 3, G2 = 0.5, E1 = 8, E2 = 4, O1 = 10, O2 =
+1.6
+<br>(E2 is lower than the usual value (7), to account for the "width" of
+the obstacle, i.e.&nbsp; to get a collision-free run.)
+</p><p>And the following were the assignments for potential field method parameters:
+<br>k_p = 1, eta = 1, rho_0 = 3.5
+</p><p>The result of the simulation is given below:</p></td>
+</tr>
+
+<tr>
+<td>
+<center><img src="./Comparison of Two Navigation Methods_files/HM_direction_advantage1_2.gif" nosave="" height="521" width="669"></center>
+</td>
+
+<td>Room dimensions: 5 x 6.5 meters
+<br>Smaller tick mark period = 10 cm
+<br>Larger tick mark period = 100 cm
+<p>Green dot is an obstacle.
+<br>Blue dot is the target.
+<br>Agent starts in upper left corner with heading = -28 degrees (almost
+facing the obstacle)
+</p><p>The common translation speed used for both methods is 0.5 m/s.
+</p><p>Magenta path is traversed with human model.
+<br>Cyan path is traversed with potential field method, and the agent will
+continue with the white path under the control of potential field method.
+</p><p>The dark green vector shows the repulsive force of obstacle, the dark
+blue vector shows the attractive force of the target, and the purple vector
+is the resultant vector. The darkgray circle is the object influence region
+for the potential field method.
+</p><p>As seen in the figure, the obstacle repulsive force has a large magnitude,
+but a small lateral component (due to the nearly "head-on" approach to
+the obstacle), so the agent should come close enough to the obstacle before
+the repulsive force lateral component can steer the agent away.</p></td>
+</tr>
+
+<tr>
+<td>
+<center><img src="./Comparison of Two Navigation Methods_files/HM_direction_advantage2_1.gif" nosave="" height="419" width="552"></center>
+</td>
+
+<td>The second experiment is in fact aimed to give its fair share back
+to the potential field method, and demonstrate the importance of tuning
+<b>both
+parts</b> of the obstacle component of the human model together (tuning
+each part in isolation did not work very well in my experiments).
+<p>This time, I tried to adjust the distance part of the human model to
+match with the distance part of the potential field method. The parameters
+of the potential field method were the ones that I usually used in my simulation
+experiments:
+</p><p>k_p = 1, eta = 1, rho_0 = 0.8
+</p><p>The graph on the left side shows the distance part of the potential
+field method in blue. The influence distance is 0.8 meters. So I tried
+to have a similar influence distance (as close as possible) for the human
+model by playing with the O2 parameter (result is shown in red).
+</p><p>The parameters for the human model were:
+<br>B = 3.25, K = 2.5, G1 = 3, G2 = 0.5, E1 = 8, O1 = 10, O2 = 7
+</p><p>The result of the simulation is given below:</p></td>
+</tr>
+
+<tr>
+<td>
+<center><img src="./Comparison of Two Navigation Methods_files/HM_direction_advantage2_2.gif" nosave="" height="523" width="668"></center>
+</td>
+
+<td>All the geometric settings are the same with the first example. And
+again, the common translation speed used for both methods is 0.5 m/s.
+<p>Magenta path is traversed with human model ( E2 = 1 ).
+<br>Orange path is traversed with human model ( E2 = 0.5 ). (As we try
+to correct the behavior, we are getting worse results, and the path starts
+looking more like the path of potential field method. Similar sudden rotations
+start to occur.)
+<br>Cyan path is traversed with potential field method, and the agent will
+continue with the white path under the control of potential field method.
+</p><p>The dark green vector shows the repulsive force of obstacle, the dark
+blue vector shows the attractive force of the target, and the purple vector
+is the resultant vector. The darkgray circle is the object influence region
+for the potential field method.
+</p><p>As seen in the figure, if the distance part is not tuned properly, trying
+to correct the behavior of the human model by modifying parameters of the
+direction part does not suffice. The influence distance is too small for
+the human model in this example (and it is not collision-free if you take
+the width of the agent into account), but potential field method is always
+collision free (unless, of course, the influence region is set to 0 meters).</p></td>
+</tr>
+</tbody></table></center>
+
+<br>&nbsp;
+<ul>
+<li>
+Speed is not taken into consideration in the human model. Because of this,
+the agent traverses different paths if different constant translation speeds
+are applied, with all other parameters being the same. The reason for this
+behavior is that, when the agent enters a region in which it should have
+a non-zero rotation acceleration, the agent is being subjected to this
+acceleration effect for a longer time if the speed is lower. An example
+is given below:</li>
+</ul>
+
+<br>&nbsp;
+<center><table border="" cellpadding="10" width="100%" nosave="">
+<tbody><tr nosave="">
+<td nosave="">
+<center><img src="./Comparison of Two Navigation Methods_files/HM_speed_effect.gif" nosave="" height="523" width="670"></center>
+</td>
+
+<td>Room dimensions: 5 x 6.5 meters
+<br>Smaller tick mark period = 10 cm
+<br>Larger tick mark period = 100 cm
+<p>Green dot is an obstacle.
+<br>Blue dot is the target.
+<br>Agent starts in lower left corner with heading = 0 degrees (facing
++x axis)
+</p><p>Magenta path is traversed with 1.0 m/s constant translation speed.
+<br>Cyan path is traversed with 0.25 m/s constant translation speed.
+</p><p>For the magenta path: the agent started a positive (counter clockwise)
+rotation towards the target, but since it was fast, it only had a small
+time to rotate (and a small total rotation). And then the obstacle influence
+pushed the agent downwards.
+</p><p>For the cyan path: the agent started the same positive rotation towards
+the target and before the influence of the obstacle took effect, it made
+a large enough turn, so that the further influence of the obstacle pushed
+the agent upwards this time.
+</p><p>&nbsp; On the other hand, even though speed is also not directly taken
+care of by the potential field method, since the potential field method
+basically provides just the directions to move in, the agent always traverses
+the same path under different speeds.</p></td>
+</tr>
+</tbody></table></center>
+
+<br>&nbsp;
+<ul>
+<li>
+The human model has a notion of acceleration and deceleration. It also
+has a damping term that effectively controls acceleration. This also makes
+the human model paths much more smoother. The potential field method commanded
+paths may easily involve many sharp turns depending on how complex the
+artificial potential field created by the target and obstacles is (which
+usually is composed of many hills and valleys even if there are only three
+or four obstacles). The example scene, and the paths above clearly show
+this difference.<br>
+<br></li>
+</ul>
+
+<ul>
+<li>
+The human model obstacle-avoidance-part is based on exponential influence-decay,
+and the potential field method obstacle-avoidance-part is based on the
+(1/distance) squared influence-decay. Therefore, in potential field method,
+it is impossible for the agent to crash into an obstacle, but in human
+modal, this is sometimes possible (even if the parameters are carefully
+tuned). This immediately reveals one advantage and one disadvantage of
+the human model over potential field method:</li>
+
+<br>&nbsp;
+<ul>
+<li>
+<b>Advantage</b>: Local minima is not a very big problem for the human
+model. With a constant speed, the agent will, in almost all cases, pass
+through a critical region (probably overshooting the target), reach a stable
+condition, and continue to rotate towards the target and approach the target.
+("Critical regions" are the places where local minimas occur for potential
+field methods.) Also the notion of a local minima is very different for
+the human model. For potential field methods, it is very easy to set up
+a local minima (for example, simpy block the direct path to target with
+obstacles placed on a concave polygon around the agent as demonstrated
+in the figure below), but for the human model, setting up a local minima
+is not an easy task. (Actually I was not able to set up one). The agent
+always uses either the cancelling effect (explained below) to pass between
+the obstacles (if O2 parameter is high) or takes an outside path (if O2
+parameter is low). The special design of the human model formula makes
+it easy for the agent to steer to the target easily. In this sense, the
+human model can be considered as a global navigation scheme rather than
+a local navigation scheme, which seems to be a very powerful feature.</li>
+
+<br>&nbsp;
+<li>
+<b>Disadvantage</b>: While the agent is passing through critical regions,
+if the placement of obstacles and/or target is such that they have cancelling
+contributions to the agent's computed rotation acceleration (which was
+very common in my trials) , then the agent may well run into obstacles.
+This is actually due to the reason that the human model acts on a point
+as the agent (does not take care of the "width" of the agent). The point
+representing the agent actually never runs over an obstacle point (although
+it is not 100% guaranteed. The potential field method formula is actually
+constructed specially to have a 100% guarantee for this, by extending the
+forces to infinity.) This is not a big problem, since it is always possible
+to have the agent take an outside path and reach the target, but in some
+cases, it may be desirable to have the agent navigate between the obstacles
+rather than move around them.</li>
+
+<p><br>The following figure demonstrates the mentioned advantage and the
+disadvantage of the human model:</p></ul>
+</ul>
+
+<center><table border="" cellpadding="10" width="100%" nosave="">
+<tbody><tr nosave="">
+<td nosave="">
+<center><img src="./Comparison of Two Navigation Methods_files/local_minima.gif" nosave="" height="521" width="669"></center>
+</td>
+
+<td>Room dimensions: 5 x 6.5 meters
+<br>Smaller tick mark period = 10 cm
+<br>Larger tick mark period = 100 cm
+<p>Green dots are obstacles.
+<br>Blue dot is the target.
+<br>Agent starts in lower left corner with heading = 0 degrees (facing
++x axis)
+</p><p>In all of the runs, the constant translation speed was 0.5 m/s.
+</p><p>White path shows the local minima effect for the potential field method.
+The agent is stuck in a "bowl" trying to find a way out, by moving around
+in circles. This is one type of a local minima for the potential field
+method. Another type is just having zero magnitude force and getting "freezed"
+in a location where the attractive and repulsive forces cancel each other.
+</p><p>Cyan path is traversed with the human model (O2 = 1.6) The influence
+regions of the obstacles are not very large, and since there are obstacles
+on both sides of the agent, their net contribution to the rotation acceleration
+calculation becomes negligible along the path, and the agent tries to pass
+between them.
+</p><p>Magenta path is also traversed with the human model (O2 = 0.8) The influence
+regions of the obstacles are large, and they force the agent to take an
+outside path.</p></td>
+</tr>
+</tbody></table></center>
+
+<br>&nbsp;
+<center>
+<p><a href="http://people.csail.mit.edu/lpk/mars/temizer_2001/Method_Comparison/index.html#Top">Back to Top</a></p></center>
+
+<hr width="100%">
+
+
+<div><div class="backpack dropzone closed">
+                <div class="title"></div>
+                <div class="animation"></div>
+                <div>Skype Backpack</div>
+            </div></div></body></html>

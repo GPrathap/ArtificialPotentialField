@@ -1,0 +1,308 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0046)http://www.cs.bilkent.edu.tr/~culha/cs548/hw2/ -->
+<html xmlns="http://www.w3.org/1999/xhtml" class="gr__cs_bilkent_edu_tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>cs548 Robot Motion and Control</title>
+<style type="text/css">.backpack.dropzone {
+  font-family: 'SF UI Display', 'Segoe UI';
+  font-size: 15px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 250px;
+  height: 150px;
+  font-weight: lighter;
+  color: white;
+  will-change: right;
+  z-index: 2147483647;
+  bottom: 20%;
+  background: #333;
+  position: fixed;
+  user-select: none;
+  transition: left .5s, right .5s;
+  right: 0px; }
+  .backpack.dropzone .animation {
+    height: 80px;
+    width: 250px;
+    background: url("https://sxt.cdn.skype.com/assets/dropzone/hoverstate.png") left center; }
+  .backpack.dropzone .title::before {
+    content: 'Save to'; }
+  .backpack.dropzone.closed {
+    right: -250px; }
+  .backpack.dropzone.hover .animation {
+    animation: sxt-play-anim-hover 0.91s steps(21);
+    animation-fill-mode: forwards;
+    background: url("https://sxt.cdn.skype.com/assets/dropzone/hoverstate.png") left center; }
+
+@keyframes sxt-play-anim-hover {
+  from {
+    background-position: 0px; }
+  to {
+    background-position: -5250px; } }
+  .backpack.dropzone.saving .title::before {
+    content: 'Saving to'; }
+  .backpack.dropzone.saving .animation {
+    background: url("https://sxt.cdn.skype.com/assets/dropzone/saving_loop.png") left center;
+    animation: sxt-play-anim-saving steps(59) 2.46s infinite; }
+
+@keyframes sxt-play-anim-saving {
+  100% {
+    background-position: -14750px; } }
+  .backpack.dropzone.saved .title::before {
+    content: 'Saved to'; }
+  .backpack.dropzone.saved .animation {
+    background: url("https://sxt.cdn.skype.com/assets/dropzone/saved.png") left center;
+    animation: sxt-play-anim-saved steps(20) 0.83s forwards; }
+
+@keyframes sxt-play-anim-saved {
+  100% {
+    background-position: -5000px; } }
+</style></head>
+
+<body data-gr-c-s-loaded="true">
+<h1>HW2 - Comparison of Potential and Navigation Functions</h1>
+<p><strong>Author: </strong><a href="http://www.cs.bilkent.edu.tr/~culha/">Utku Çulha</a></p>
+<hr>
+<p>This web page consists of information about the potential and navigation function algorithms, their implementation and comparison. The content of the web page is indexed as below:</p>
+<table width="220" border="1">
+  <tbody><tr>
+    <th width="38" scope="col">Index</th>
+    <th width="166" scope="col">Subject</th>
+  </tr>
+  <tr>
+    <th scope="row">1</th>
+    <td>Introduction </td>
+  </tr>
+  <tr>
+    <th scope="row">2</th>
+    <td>Potential Functions</td>
+  </tr>
+  <tr>
+    <th scope="row">3</th>
+    <td>Algorithm</td>
+  </tr>
+  <tr>
+    <th scope="row">4</th>
+    <td>Platform and Source</td>
+  </tr>
+  <tr>
+    <th scope="row">5</th>
+    <td>Experiments</td>
+  </tr>
+  <tr>
+    <th scope="row">6</th>
+    <td>Observations</td>
+  </tr>
+</tbody></table>
+<p> Some of the images used in sections 1 and 2 are adapted from&nbsp;<em>Asst. Prof. Uluç Saranlı</em>'s&nbsp;<a href="http://www.cs.bilkent.edu.tr/~saranli/courses/cs548/index.html">Robot Motion and Planning</a>&nbsp;course slides and from chapter 2 of the book "<strong>Principles of Robot Motion</strong>" by&nbsp;<em>Choset H. et.al.</em></p>
+<h2>1. Introduction</h2>
+<p align="justify">Having explored the bug algorithms, the main idea of this assignment is to expand the path planning algorithms for a robot in a more complex world. Again, assuming a point robot, this web page investigates the improvements in potential functions and compares the performance of different algorithms. Based on the idea of physical rules in potential fields, potential functions assume the existance of repulsive and attractive forces acting on a point robot in its world. Here, the general motivation for the functions will be the expectation of a complete path planning algorithm that moves the robot by the vectoral sums of the attractive force of the target and repulsive forces from obstacles in the area.</p>
+<h2>2. Potential Functions</h2>
+<p align="justify">In potential functions, the aim remains same while operation and configuration differ from the bug algorithms. The aim is to find a complete path from the starting location of the robot to the target location at the same time avoiding obstacles. Comparing with bug algorithms, it is seen that the configuration space in those algorithms is limited to two dimensions. However the potential functions that will be mentioned here can be applied to a more general class of configuration spaces.</p>
+<p align="justify">The potential functions that will be explored will be differentiable real values functions; so assuming the value of the potential function to be the energy, the gradient of this function will yield force. Depending on this simple but strong assumption, the gradient of the potential field will be expected to move the robot to the goal position. The success of the function depends on the attractive and repulsive potential gradients acting on the robot. The robot and the rest of all the obstacles are assumed to be positively charged, where the goal is negatively charged. This charge difference yields the repulsive forces pushing the robot and goal pulling it. </p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/potfield.JPG" width="399" height="254"></p>
+<p align="center"><strong>Figure 2.1 </strong>- Potential field and gradient forces acting on the robot to achieve complete path</p>
+<p align="justify">It is important to mention here is that, the although potential functions could be used in higher order dynamics, the algorithms and implementations depend on first order systems so that potential gradient is velocity instead of force. Considering this choice, we can also extend our methodology by stating that the robot will follow a path downhill starting from a high ground to the goal which is located at the lowest ground in the world. This downhill action depends on the <em>gradient descent </em>algorithm, where robot follows the negated potential gradient.</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/descent.JPG" width="210" height="61"></p>
+<p align="center"><strong>Equation 2.1 -</strong> Gradient descent shown as the negated gradient. U stands for the potential function</p>
+<p align="justify">The potential function is the sum of attractive and repulsive potential functions on the robot. Gradient of this sum yields the total velocity of the robot at its current position.</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/topPot.JPG" width="239" height="40"></p>
+<p align="center"><strong>Equation 2.2 -</strong> Total potential is summed of attractive and repulsive potentials</p>
+<h2>3. Algorithm</h2>
+<p align="justify">In this experiment two kinds of potential functions is implemented: additive attractive/repulsive potential and navigation potential functions. Each of these functions have differing gradients which result in different paths for the robot. It will be noticed that former of these potential functions will fail in getting stuck in a local minimum location where the latter potential will overcome this problem.</p>
+<h3>3.1 Additive Attractive / Repulsive Potential</h3>
+<p>This potential function consists of the summation of attractive and repulsive potentials on the robot. </p>
+<h4>3.1.1 Attractive Potential</h4>
+<p align="justify">There are several important functions and definitions needed to be defined before explaining the details of the following equations. Attractive potential, <em>Uatt</em>, is required to be monotically increasing, therefore there are several choices to implement. The first one is the conic potential where distance from the robot to the goal is calculated in means of Euclidian distance scaled with a constant parameter. The other choice is the quadratic potential defined to overcome the discontinuties in the gradient vectors caused by world configuration. With respect to the overshoot of the robot near the goal, the algorithm will make a decision between the implementation of these potentials. Given a predefined distance threshold dgoal*, conic potential will be used when d (q,qgoal) , i.e, the distance between the goal and robot, is larger than dgoal* and quadratic potential will be used otherwise.</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/conquad.JPG" width="426" height="86"></p>
+<p align="center"><strong>Equation 3.1.1 -</strong> Conical and quadratic potentials that will be selected with respect to the distance from the robot to the goal</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/combine.JPG" width="482" height="248"></p>
+<p align="center"><strong>Equation 3.1.2 -</strong> Combined attractive potential function and gradient function with the distance relation</p>
+<p align="justify">In the equations above,   ζ  is the scaling factor and dgoal* is the threshold value that defines the distance between the robot and the goal which will be compared for the choice between conic and quadratic potential. It is important to to here that gradient of the distance function ζd(q,qgoal) is defined as <em>ζ (q - qgoal ) / d (q,qgoal)</em></p>
+<h4 align="justify">3.1.2 Repulsive Potential</h4>
+<p align="justify">As there is exactly one goal in the world, attractive potential is calculated upon the relation between the robot and goal only. However, including the bounding sphere in the world, there are numerous obstacles which affects the robot. So in order to calculate the total repulsive potential, the algorithm looks at the relation between the robot and every obstacle. Same as the attractive potential, there are predefined parameters in repulsive potential too. Considering many obstacles, the algorithm prefers to neglect the repulsive force of the obstacles that are too far from the robot. In order to define this distance, a proximity threshold Q* is used in the following algorithms. Also a scaling factor ŋ is used to define the scale of the potential velocity.</p>
+<p align="justify">An important point in implementing the repulsive potential is to take care of repulsive forces of obstacles that are equally at the same distance to the robot. As this might oscillatory motion in implementation, the distance to the individual obstacles are preferred rather than the distance to closest obstacles. The following functions explain the repulsive potential and its gradient.</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/index_clip_image002_0001.gif" alt="" width="124" height="20">  , <img src="./cs548 Robot Motion and Control_files/index_clip_image002_0002.gif" alt="" width="107" height="36" align="absmiddle"></p>
+<p align="center"><strong>Equation 3.1.3 - </strong>Distance from the robot to the closest point  in each individual obstacle and gradient of this distance</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/index_clip_image002_0003.gif" alt="" width="293" height="59"></p>
+<p align="center"><strong>Equation 3.1.4 -</strong> Repulsive potential function. Notice that function neglects effects of obstacles located far from the robot</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/index_clip_image002_0004.gif" alt="" width="373" height="59"></p>
+<p align="center"><strong>Equation 3.1.5 -</strong> Repulsive gradient function</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/index_clip_image002_0005.gif" alt="" width="145" height="51"></p>
+<p align="center"><strong>Equation 3.1.6 -</strong> Total repulsive potential field</p>
+<h3 align="justify">3.2 Navigation Potential</h3>
+<p align="justify">Another kind of a potential function is a navigation function. With respect to the failure of the previous potential function,whose results will be shown in section 5, this function is introduced. Unlike the previous one, there exists only one minimum point in the configuration space, so that there is not any local mimimum problem. Similar to the previous potential function, the gradients here are defined upon distance functions. In the sphere wolrd that the robot and obstacles stay, here are the distance functions.</p>
+<p align="center">&nbsp;<img src="./cs548 Robot Motion and Control_files/index_clip_image002_0006.gif" alt="" width="211" height="40"></p>
+<p align="center"><strong>Equation 3.2.1 -</strong> ßi shows the distance to obstalces. Note here that i = 0 is the bounding sphere</p>
+<p align="justify">In the same fashion of adding attractive and repulsive forces, we obtain the total force acting on the robot. Following formulas are the attractive and repulsive gradients. Reader should notice here is that there is only one predefined parameter here. K is used in the repulsive gradients to ensure that there is exactly one minimum point that is the goal point. Increasing K will yield success of navigation function where decreasing the parameter will converge to the performance of the previous potential function.</p>
+<div align="center">
+  <table width="324" border="0">
+    <tbody><tr>
+      <td width="128"><img src="./cs548 Robot Motion and Control_files/index_clip_image002_0012.gif" alt="" width="110" height="51"></td>
+      <td width="28">&nbsp;  </td>
+      <td width="154"><div align="center"><img src="./cs548 Robot Motion and Control_files/index_clip_image002_0013.gif" alt="" width="149" height="20"></div></td>
+    </tr>
+  </tbody></table>
+</div>
+<p align="center"><strong>Equation 3.2.2 -</strong> Attractive and repulsive potentials respectively</p>
+<p align="justify">Combining both of these attractive and repulsive potentials we have the following total potential. The graident of the total potential yields the forces acting on the robot in the sphere world.</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/index_clip_image002_0014.gif" alt="" width="217" height="45"></p>
+<p align="center"><strong>Equation 3.2.3 -</strong> Navigation function in the sphere world</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/index_clip_image002_0016.gif" alt="" width="627" height="69"></p>
+<p align="center"><strong>Equation 3.2.3</strong> - Gradient of the navigation function</p>
+<table width="830" border="0" align="center">
+  <tbody><tr>
+    <td width="168"><p align="center"><img src="./cs548 Robot Motion and Control_files/index_clip_image002_0017.gif" alt="" width="158" height="39"></p></td>
+    <td width="6">&nbsp;</td>
+    <td width="682"><p align="center"><img src="./cs548 Robot Motion and Control_files/index_clip_image002_0019.gif" alt="" width="627" height="48"></p></td>
+  </tr>
+</tbody></table>
+<table width="500" border="0" align="center">
+  <tbody><tr>
+    <td><p align="center"><img src="./cs548 Robot Motion and Control_files/index_clip_image002_0020.gif" alt="" width="202" height="53"></p></td>
+    <td>&nbsp;</td>
+    <td><p align="center"><img src="./cs548 Robot Motion and Control_files/index_clip_image002_0021.gif" alt="" width="187" height="38"></p></td>
+  </tr>
+</tbody></table>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/index_clip_image002_0023.gif" alt="" width="843" height="74"></p>
+<p align="center"><strong>Equation 3.2.4 </strong>- Resulting gradient of navigation function</p>
+<h2>4. Platform and Source</h2>
+<p>I have used MATLAB to implement the potential functions. For both of the potential functions sphere world is the same. The world is defined as world = [ x0 y0 r0 , x1 y1 r1 ...], where the first row is the bounding sphere and the rest is the obstacles. For the sake of simplicity and convergence time I have defined the bounding sphere to have a radius of 15 with origin located at [0,0]. The position of the goal and robot is changed for each experiment ( 1. simple, 2. composed, 3. local minimum ) but each of these configurations remained same for both of the potential functions. I have chosen the required parameters for both functions by trial and error. For the first potential function, the parameters are as follows: ζ = 0.5; dgoal* = 15; ŋ = 1; Q* = 1. For the latter function K = 3.</p>
+<p>I have used MATLAB's ode45() differential equation solver. In order to control the integration and terminate it, I have also implemented event functions for ode45. These event functions actually implemented in order to detect whether robot has reached the goal or is stuck in local minimum point. These detections required a threshold parameter, Є, which is 10e-01 for former function, 10e-05 for the latter function.</p>
+<p>The source code for the whole implementation could be found <a href="http://www.cs.bilkent.edu.tr/~culha/cs548/hw2/potentials.zip">here</a>.</p>
+<h2>5. Experiments</h2>
+<p>I have implemented 3 different types of world configurations in order to compare the performace of 2 potential functions. Those configurations started from a simple case, then a more composed one and at the end the local minimum configuration. For each of the experiment results below, the configuration space will be shown at first. Then the resulting path from additive potential function and potential field that yielded that result will be shown. After that the convergence time will be expressed. After that, results for the navigation function will be expressed in the same order.</p>
+<h3>5.1 Simple Case</h3>
+<p>In this configuration there are only 2 obstacles found in the sphere world which occlude the direct path to the goal. The world is defined as world = [0 0 15; 1 1 2; -5 -7 3 ]. The locations of robot and the goal is  [-3 -11] and [-1 5] respectively.</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/simpleWorld.png" width="480" height="381"></p>
+<p align="center"><strong>Figure 5.1.1 -</strong> Configuration space for the first experiment. Blue circles represent the obstalces. Green circle is the robot and red star is the goal.</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/swpotpath.png" width="474" height="398"></p>
+<p align="center"><strong>Figure 5.1.2 -</strong> Resulting potential function path</p>
+<table width="500" border="0" align="center">
+  <tbody><tr>
+    <td><img src="./cs548 Robot Motion and Control_files/swpotfi1.png" width="504" height="397"></td>
+    <td><img src="./cs548 Robot Motion and Control_files/swpotfi2.png" width="472" height="386"></td>
+  </tr>
+</tbody></table>
+<p align="center"><strong>Figure 5.1.3 -</strong> Potential field that generates the resulting path. Notice that goal is located at the minimum point here which is shown with cold blue areas. Red areas represent higher grounds in the sphere world</p>
+<p align="justify">The convergence time for the robot to reach the goal is 0.078143 seconds.</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/swnavpath.png" width="470" height="382"></p>
+<p align="center"><strong>Figure 5.1.4 -</strong> Navigation function yields the path above</p>
+<table width="500" border="0" align="center">
+  <tbody><tr>
+    <td><img src="./cs548 Robot Motion and Control_files/swnavfi1.png" width="494" height="394"></td>
+    <td><img src="./cs548 Robot Motion and Control_files/swnavfi2.png" width="470" height="379"></td>
+  </tr>
+</tbody></table>
+<p align="center"><strong>Figure 5.1.5 -</strong>Potential field in navigation function. Notice that an increased K lets the goal to be at the bottom of the bag which can be seen better in the figure on the left</p>
+<p align="justify">The convergence time for the robot to reach the goal is  0.069226 seconds.</p>
+<h3>5.2 Composed Case</h3>
+<p>In this configuration there are 3 obstacles found in the sphere world which occlude the direct path to the goal. The world is defined as world = world = [0 0 15; -3 -6 2; 2 1 3; -3 7 2]. The locations of robot and the goal is  [-3 -11] and [-1 12] respectively.</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/composedWorld.png" width="470" height="387"></p>
+<p align="center"><strong>Figure 5.2.1 -</strong> Configuration space for the second experiment. Blue circles represent the obstalces. Green circle is the robot and red star is the goal.</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/copotpath.png" width="476" height="386"></p>
+<p align="center"><strong>Figure 5.2.2 -</strong> Resulting potential function path</p>
+<table width="500" border="0" align="center">
+  <tbody><tr>
+    <td><img src="./cs548 Robot Motion and Control_files/copotfi1.png" width="505" height="395"></td>
+    <td><img src="./cs548 Robot Motion and Control_files/copotfi2.png" width="468" height="375"></td>
+  </tr>
+</tbody></table>
+<p align="center"><strong>Figure 5.2.3 -</strong> Potential field that generates the resulting path. Notice that as the position of the goal changes, the attractive potential field changes. Compared to the first experiment, we now have a more sloping downhill towards the goal</p>
+<p align="justify">The convergence time for the potential function is 0.167987 seconds.</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/conavpath.png" width="471" height="387"></p>
+<p align="center"><strong>Figure 5.2.4 - </strong>The resulting path of the navigation function</p>
+<table width="500" border="0" align="center">
+  <tbody><tr>
+    <td><img src="./cs548 Robot Motion and Control_files/conavfi1.png" width="496" height="392"></td>
+    <td><img src="./cs548 Robot Motion and Control_files/conavfi2.png" width="474" height="378"></td>
+  </tr>
+</tbody></table>
+<p align="center"><strong>Figure 5.2.5 - </strong>Navigation function field yields one local minimum which is the goal point</p>
+<p align="justify">The convergence time for the robot to reach the goal is 0.114136 seconds.</p>
+<h3 align="justify">5.3 Local Minimum Case</h3>
+<p align="justify">In this configuration there are 3 obstacles found in the sphere world which occlude the direct path to the goal.What is more the aim here is to create a local minimum area that will lead former potential function to fail and get stuck at this local minimum point. The world is defined as world = world = [0 0 15; -4 -2 3; 4 -2 3; 0 5 3]. The locations of robot and the goal is  [-1 -11] and [0 12] respectively.</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/localWorld.png" width="470" height="381"></p>
+<p align="center"><strong>Figure 5.3.1 - </strong>Sphere world with local minimums between obstacles</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/locpotpath.png" width="475" height="378"></p>
+<p align="center"><strong>Figure 5.3.2 - </strong>Former potential function fails as expected at one of the local minimum points. ode45() stops integrating as local minimum event has been detected</p>
+<table width="500" border="0" align="center">
+  <tbody><tr>
+    <td><img src="./cs548 Robot Motion and Control_files/locpotfi1.png" width="498" height="382"></td>
+    <td><img src="./cs548 Robot Motion and Control_files/locpotfi2.png" width="474" height="385"></td>
+  </tr>
+</tbody></table>
+<p align="center"><strong>Figure 5.3.3 - </strong>Notice the local minimum points between the obstacles in the figure on the right. Although the global minimum is still the goal, function fails to get the robot to the goal</p>
+<p align="justify">The function fails to reach the goal so we cannot mention the convergence time. However the function stops integrating after 0.047061 seconds when the local minimum problem has been detected.</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/locnavpath.png" width="476" height="390"></p>
+<p align="center"><strong>Figure 5.3.4 - </strong>Navigation function succeeds in finding the path to the goal despite the local minimum areas</p>
+<table width="500" border="0" align="center">
+  <tbody><tr>
+    <td><img src="./cs548 Robot Motion and Control_files/locnavfi1.png" width="497" height="391"></td>
+    <td><img src="./cs548 Robot Motion and Control_files/locnavfi2.png" width="466" height="390"></td>
+  </tr>
+</tbody></table>
+<p align="center"><strong>Figure 5.3.5 - </strong>Navigation function fields show local minimum areas</p>
+<p align="justify">The convergence time for robot to reach the goal is 0.001401 seconds.</p>
+<h2>6. Observations</h2>
+<p>When we compare both of the functions we can see that navigation function outbeats the additive potential function both in convergence time and success rate. A comparison table showing the convergence times can be seen below.</p>
+<table width="500" border="1" align="center">
+  <tbody><tr>
+    <th scope="col">&nbsp;</th>
+    <th scope="col">Additive Potential Function</th>
+    <th scope="col">Navigation Potential Function</th>
+  </tr>
+  <tr>
+    <th scope="row">Simple Case</th>
+    <td> <div align="center">0.078143 sec.</div></td>
+    <td><div align="center">0.069226 sec.</div></td>
+  </tr>
+  <tr>
+    <th scope="row">Composed Case</th>
+    <td><div align="center">0.167987 sec.</div></td>
+    <td><div align="center">0.114136 sec.</div></td>
+  </tr>
+  <tr>
+    <th scope="row">Local Minimum Case</th>
+    <td><div align="center">Inf.</div></td>
+    <td><div align="center">0.198178 sec.</div></td>
+  </tr>
+</tbody></table>
+<p align="center"><strong>Table 6.1 -</strong> Performance comparison of two functions</p>
+<p align="justify">Although its low performance, additive potential function is easier to implement with respect to its comparible easy gradient and potential formulas. However, MATLAB helps the user to implement both of these functions with its heavy support on integration functions. </p>
+<p align="justify">Using ode45() in order to perform integrals for the acting forces, increases the efficiency of the functions considerably. It is most likely to observe longer convergence times for functions when manual in-loop integration is performed. What is more ode45() function enables to integrate event functions in order to detect possible termination points. Reaching the goal, getting stuck at the local minimum has been implemented by using event functions of the ode45() function.</p>
+<h3 align="justify">6.1 Extra Tests</h3>
+<p align="justify">In this part another comparison between two functions has been made with a given interesting configuration. Building the world with only one obstacle which is located on the direct line from the robot to the goal also leads the failure of the additive potential function. Here are the results.</p>
+<table width="500" border="0" align="center">
+  <tbody><tr>
+    <td><img src="./cs548 Robot Motion and Control_files/expotpath.png" width="470" height="382"></td>
+    <td><img src="./cs548 Robot Motion and Control_files/expotfi1.png" width="479" height="387"></td>
+  </tr>
+</tbody></table>
+<p align="center"><strong>Figure 6.1 -</strong> Additive potential function fails to find the path</p>
+<p align="justify">Navigation function also fails to find the path in this case and fails to detect the terminating event because of the choice of Є. The possible reason for this result is the vectoral summation of forces acting on the robot. As the world is sphere shaped, forces acting on opposite directions but existing on the same line cancel each other out. Because of this reason the robot stays at the same position. Any smallest change at the position of the robot or the goal would yield a successful path. The proof of this theory is shown with a change of 0.2 units for the robot's initial pose applied in the additive potential function.</p>
+<p align="center"><img src="./cs548 Robot Motion and Control_files/expotpath2.png" width="470" height="376"></p>
+<p align="center"><strong>Figure 6.2 -</strong> Resulting potential function path with a given 0.2 displacement of robot for its initial location</p>
+<hr>
+<table width="500" border="0" align="center">
+  <tbody><tr>
+    <td><div align="center"><a href="http://www.cs.bilkent.edu.tr/~culha/cs548/hw2/#">back to top</a></div></td>
+    <td><div align="center"><a href="http://www.cs.bilkent.edu.tr/~culha/">author's webpage</a></div></td>
+    <td><div align="center"><a href="http://www.cs.bilkent.edu.tr/~culha/cs548/">back to assignments page</a></div></td>
+  </tr>
+</tbody></table>
+<hr>
+<div align="center">
+  <p>Utku Çulha - Bilkent University </p>
+  <p>Computer Engineering Department </p>
+</div>
+<hr>
+
+
+<div><div class="backpack dropzone closed">
+                <div class="title"></div>
+                <div class="animation"></div>
+                <div>Skype Backpack</div>
+            </div></div></body></html>
