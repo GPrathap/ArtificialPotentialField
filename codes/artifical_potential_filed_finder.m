@@ -19,7 +19,7 @@ global elliptic_scale;
 global RT;
 
 % Parameter values to be used for the homework ---
-arena_r = 10 ;  % Radius ; x, y, z = Always @ origin
+arena_r = 150 ;  % Radius ; x, y, z = Always @ origin
 arena_map = [];
 infinity = 1e100; % 1e5 eeh... 1e6 baya uzar...
 epsilon_gr = 2e-3;      % local minima alg�lamak i�in epsilonun izin verilen de�eri
